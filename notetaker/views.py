@@ -13,7 +13,10 @@ def index(request):
     notes = Notes.objects.all()
     if request.method == 'POST':
         if "upload" in request.POST:
-            doc_form = DocumentForm(request.POST, request.FILES)
+            if db_document:
+                doc_form = DocumentForm(request.POST, request.FILES, instance=db_document)
+            else:
+                doc_form = DocumentForm(request.POST, request.FILES)
             if doc_form.is_valid():
                 upload = doc_form.save()
                 document_url = upload.document.url
@@ -30,7 +33,7 @@ def index(request):
             if note_form.is_valid():
                 note_form.save()
                 note_form = NotesForm()
-    return render(request, 'notetaker/index.html', {'form':doc_form,
+    return render(request, 'notetaker/index.html', {'doc_form':doc_form,
                                                     'document_url':document_url,
                                                     'note_form':note_form,
                                                     'notes':notes})
