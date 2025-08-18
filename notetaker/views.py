@@ -33,6 +33,12 @@ def index(request):
             if note_form.is_valid():
                 note_form.save()
                 note_form = NotesForm()
+        
+        elif "delete-note" in request.POST:
+            note_id = request.POST.get("delete-note")
+            note = Notes.objects.filter(id = note_id)
+            note.delete()
+
     return render(request, 'notetaker/index.html', {'doc_form':doc_form,
                                                     'document_url':document_url,
                                                     'note_form':note_form,

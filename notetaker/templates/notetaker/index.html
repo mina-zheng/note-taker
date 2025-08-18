@@ -36,6 +36,10 @@
                     {% for note in notes %}
                     <div class = "note">
                         <p> {{note.content}} </p>
+                        <form method = "POST">
+                            {% csrf_token %}
+                            <button type = "submit" name = "delete-note" value = "{{ note.id }}">Delete</button>
+                        </form>
                     </div>
                     {% empty %}
                     <p>No notes yet.</p>
