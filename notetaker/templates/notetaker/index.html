@@ -52,6 +52,19 @@
                     {{ note_form.as_p }}
                     <button type = "submit" name="highlight">Highlight</button>
                 </form>
+                <div class = "highlight-wrapper">
+                    {% for keyword in highlights %}
+                    <div class = "highlight">
+                        <p> {{ keyword }} </p>
+                        <form method = "POST">
+                            {% csrf_token %}
+                            <button type = "submit" name = "delete-highlight" value = "{{ keyword }}">Delete</button>
+                        </form>
+                    </div>
+                    {% empty %}
+                    <p>No notes yet.</p>
+                    {% endfor %}
+                </div>
             </div>
         </div>
     </body>

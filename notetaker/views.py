@@ -14,7 +14,11 @@ def index(request):
     note_form = NotesForm()
 
     notes = Notes.objects.all()
+    highlighted_instance = Highlights.objects.first()
+    highlights = highlighted_instance.keywords
+
     new_doc_url = None
+
     if request.method == 'POST':
         if "upload" in request.POST:
             if db_document:
@@ -73,8 +77,19 @@ def index(request):
 
             os.replace(temp, new_doc_path)
             new_doc_url = os.path.join(settings.MEDIA_URL, name)
+        
+        elif "delete-highlight" in request.POST:
+            deleted_keyword = request.POST.get("delete-highlight")
+            highlights.remove(deleted_keyword)
 
+            highlighted_instance.save()
 
+        try:
+            highlighted_instance = Highlights.objects.get(document=db_document)
+            highlights = highlighted_instance.keywords
+        except:
+            highlights = []
+            
     else:
         new_doc = Document.objects.last()
         if new_doc:
@@ -83,4 +98,5 @@ def index(request):
                                                     'document_url':document_url,
                                                     'note_form':note_form,
                                                     'notes':notes,
+                                                    'highlights':highlights,
                                                     'new_doc_url':new_doc_url})
