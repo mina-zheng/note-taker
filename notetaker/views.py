@@ -2,6 +2,9 @@ from django.http import HttpResponse # type: ignore
 from .forms import DocumentForm, NotesForm
 from django.shortcuts import render # type:ignore
 from .models import Document, Notes
+import fitz
+import os
+from django.conf import settings # type:ignore
 
 def index(request):
     db_document = Document.objects.first()
@@ -11,6 +14,7 @@ def index(request):
     note_form = NotesForm()
 
     notes = Notes.objects.all()
+    new_doc_url = None
     if request.method == 'POST':
         if "upload" in request.POST:
             if db_document:
@@ -39,7 +43,35 @@ def index(request):
             note = Notes.objects.filter(id = note_id)
             note.delete()
 
+        elif "highlight" in request.POST:
+            keyword = ""
+            document_path = db_document.document.path
+            name = "new_" + db_document.document.name
+            new_doc_path = os.path.join(settings.MEDIA_ROOT, name)
+
+            if os.path.exists(new_doc_path):
+                doc = fitz.open(new_doc_path)
+            else:
+                doc = fitz.open(document_path)
+            form = NotesForm(request.POST)
+
+            if form.is_valid():
+                keyword = form.cleaned_data["content"]
+            for page in doc:
+                text_instances = page.search_for(keyword)
+                if text_instances:
+                    for inst in text_instances:
+                        page.add_highlight_annot(inst)
+            
+            temp = os.path.join(settings.MEDIA_ROOT, "temp.pdf")
+            doc.save(temp)
+            doc.close()
+
+            os.replace(temp, new_doc_path)
+            new_doc_url = os.path.join(settings.MEDIA_URL, name)
+
     return render(request, 'notetaker/index.html', {'doc_form':doc_form,
                                                     'document_url':document_url,
                                                     'note_form':note_form,
-                                                    'notes':notes})
+                                                    'notes':notes,
+                                                    'new_doc_url':new_doc_url})

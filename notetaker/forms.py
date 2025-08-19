@@ -8,7 +8,10 @@ class DocumentForm(forms.ModelForm):
         fields = ["title", "document"]
 
 class NotesForm(forms.ModelForm):
-    content = forms.CharField(required=True)
     class Meta:
         model = Notes
         fields = ["content"]
+        widgets = {
+            "content": forms.Textarea(attrs={
+            })
+        }

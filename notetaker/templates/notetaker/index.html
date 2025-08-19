@@ -15,11 +15,13 @@
                     <button type="submit" name = "upload">Upload</button>
                 </form>
 
-                {% if document_url %}
+                {% if new_doc_url %}
+                    <h3>Highlighted PDF:</h3>
+                    <embed src="{{ new_doc_url }}" type="application/pdf" width="100%" height="600px"></embed>
+                {% elif document_url %}
                     <h3>Uploaded PDF:</h3>
-                    <embed src="{{ document_url }}" type="application/pdf" width="100%" height="600px"></iframe>
+                    <embed src="{{ document_url }}" type="application/pdf" width="100%" height="600px"></embed>  
                 {% endif %}
-
                 <form method="POST">
                     {% csrf_token %}
                     <button type ="submit" name = "delete">Delete</button>
@@ -35,7 +37,7 @@
                 <div class = "note-wrapper">
                     {% for note in notes %}
                     <div class = "note">
-                        <p> {{note.content}} </p>
+                        <p> {{ note.content|linebreaks }} </p>
                         <form method = "POST">
                             {% csrf_token %}
                             <button type = "submit" name = "delete-note" value = "{{ note.id }}">Delete</button>
@@ -45,6 +47,11 @@
                     <p>No notes yet.</p>
                     {% endfor %}
                 </div>
+                <form method="POST">
+                    {% csrf_token %}
+                    {{ note_form.as_p }}
+                    <button type = "submit" name="highlight">Highlight</button>
+                </form>
             </div>
         </div>
     </body>
