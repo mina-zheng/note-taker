@@ -1,7 +1,7 @@
 from django.http import HttpResponse # type: ignore
 from .forms import DocumentForm, NotesForm
 from django.shortcuts import render # type:ignore
-from .models import Document, Notes
+from .models import Document, Notes, Highlights
 import fitz
 import os
 from django.conf import settings # type:ignore
@@ -57,6 +57,10 @@ def index(request):
 
             if form.is_valid():
                 keyword = form.cleaned_data["content"]
+                instance, created = Highlights.objects.get_or_create(document=db_document)
+                instance.keywords.append(keyword)
+                instance.save()
+
             for page in doc:
                 text_instances = page.search_for(keyword)
                 if text_instances:
@@ -70,6 +74,11 @@ def index(request):
             os.replace(temp, new_doc_path)
             new_doc_url = os.path.join(settings.MEDIA_URL, name)
 
+
+    else:
+        new_doc = Document.objects.last()
+        if new_doc:
+            new_doc_url = new_doc.document.url
     return render(request, 'notetaker/index.html', {'doc_form':doc_form,
                                                     'document_url':document_url,
                                                     'note_form':note_form,
