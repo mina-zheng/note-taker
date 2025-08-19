@@ -48,15 +48,6 @@ def index(request):
             note.delete()
 
         elif "highlight" in request.POST:
-            keyword = ""
-            document_path = db_document.document.path
-            name = "new_" + db_document.document.name
-            new_doc_path = os.path.join(settings.MEDIA_ROOT, name)
-
-            if os.path.exists(new_doc_path):
-                doc = fitz.open(new_doc_path)
-            else:
-                doc = fitz.open(document_path)
             form = NotesForm(request.POST)
 
             if form.is_valid():
@@ -65,18 +56,6 @@ def index(request):
                 instance.keywords.append(keyword)
                 instance.save()
 
-            for page in doc:
-                text_instances = page.search_for(keyword)
-                if text_instances:
-                    for inst in text_instances:
-                        page.add_highlight_annot(inst)
-            
-            temp = os.path.join(settings.MEDIA_ROOT, "temp.pdf")
-            doc.save(temp)
-            doc.close()
-
-            os.replace(temp, new_doc_path)
-            new_doc_url = os.path.join(settings.MEDIA_URL, name)
         
         elif "delete-highlight" in request.POST:
             deleted_keyword = request.POST.get("delete-highlight")
@@ -89,11 +68,29 @@ def index(request):
             highlights = highlighted_instance.keywords
         except:
             highlights = []
-            
-    else:
-        new_doc = Document.objects.last()
-        if new_doc:
-            new_doc_url = new_doc.document.url
+
+    if db_document:
+        document_path = db_document.document.path
+        doc = fitz.open(document_path)
+
+        try:
+            highlight_instance = Highlights.objects.get(document=db_document)
+            highlights = highlight_instance.keywords
+        
+        except:
+            highlights = []
+
+        for page in doc:
+            for kw in highlights:
+                text_instances = page.search_for(kw)
+                for inst in text_instances:
+                    page.add_highlight_annot(inst)
+
+        temp_path = os.path.join(settings.MEDIA_ROOT, "temp.pdf")
+        doc.save(temp_path)
+        doc.close()
+        new_doc_url = os.path.join(settings.MEDIA_URL, "temp.pdf")
+
     return render(request, 'notetaker/index.html', {'doc_form':doc_form,
                                                     'document_url':document_url,
                                                     'note_form':note_form,
