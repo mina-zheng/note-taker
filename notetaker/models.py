@@ -14,4 +14,6 @@ class Highlights(models.Model):
     keywords = ArrayField(models.CharField(), 
                           default=list,
                           blank=True
-                          )
+    )
+    notes = models.CharField(default="")
+

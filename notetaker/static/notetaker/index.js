@@ -1,5 +1,2 @@
-
-
-function add_note() {
-
-}
+const box = document.querySelector(".box");
+box.style.display = "none";

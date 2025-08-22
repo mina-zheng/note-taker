@@ -32,7 +32,7 @@
                 <form method="POST">
                     {% csrf_token %}
                     {{ note_form.as_p }}
-                    <button type="submit" name = "add-note" onclick  = "add_note()">Add Note</button>
+                    <button type="submit" name = "add-note">Add Note</button>
                 </form>
                 <div class = "note-wrapper">
                     {% for note in notes %}
@@ -58,7 +58,13 @@
                         <p> {{ keyword }} </p>
                         <form method = "POST">
                             {% csrf_token %}
+                            <button type = "submit" name = "add-highlight-note" value = "{{ keyword }}" onclick = "show_box()">Add Note</button>
                             <button type = "submit" name = "delete-highlight" value = "{{ keyword }}">Delete</button>
+                        </form>
+                        <form method="POST" class = "box">
+                            {% csrf_token %}
+                            {{ note_form.as_p }}
+                            <button type= "submit" name = "submit-highlight-note">Add Note</button>
                         </form>
                     </div>
                     {% empty %}

@@ -14,8 +14,11 @@ def index(request):
     note_form = NotesForm()
 
     notes = Notes.objects.all()
-    highlighted_instance = Highlights.objects.first()
-    highlights = highlighted_instance.keywords
+    try:
+        highlighted_instance = Highlights.objects.get(document=db_document)
+        highlights = highlighted_instance.keywords
+    except:
+        highlights = []
 
     new_doc_url = None
 
@@ -63,11 +66,19 @@ def index(request):
 
             highlighted_instance.save()
 
+
+        #elif "add-highlight-note" in request.POST:
+            
+            
         try:
             highlighted_instance = Highlights.objects.get(document=db_document)
             highlights = highlighted_instance.keywords
         except:
             highlights = []
+        
+
+        
+
 
     if db_document:
         document_path = db_document.document.path
@@ -86,10 +97,11 @@ def index(request):
                 for inst in text_instances:
                     page.add_highlight_annot(inst)
 
-        temp_path = os.path.join(settings.MEDIA_ROOT, "temp.pdf")
+        name = db_document.document.name + "_new.pdf"
+        temp_path = os.path.join(settings.MEDIA_ROOT, name)
         doc.save(temp_path)
         doc.close()
-        new_doc_url = os.path.join(settings.MEDIA_URL, "temp.pdf")
+        new_doc_url = os.path.join(settings.MEDIA_URL, name)
 
     return render(request, 'notetaker/index.html', {'doc_form':doc_form,
                                                     'document_url':document_url,
