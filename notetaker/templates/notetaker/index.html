@@ -1,91 +1,139 @@
 <!DOCTYPE html>
-<html lang = "en">
-    <head>
-        <meta charset = "UTF-8" />
-        <title>Notetaker</title>
-        {% load static %}
-        <link rel="stylesheet" href = "{% static 'notetaker/style.css' %}">
-    </head>
-    <body>
-        <div class = "wrapper">
-            <div class = "view">
-                <form method="POST" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    {{ doc_form.as_p }}
-                    <button type="submit" name = "upload">Upload</button>
-                </form>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Notetaker</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'notetaker/style.css' %}">
+    <style>
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="view">
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ doc_form.as_p }}
+                <button type="submit" name="upload">Upload</button>
+            </form>
 
-                {% if new_doc_url %}
-                    <h3>Highlighted PDF:</h3>
-                    <embed src="{{ new_doc_url }}" type="application/pdf" width="100%" height="600px"></embed>
-                {% elif document_url %}
-                    <h3>Uploaded PDF:</h3>
-                    <embed src="{{ document_url }}" type="application/pdf" width="100%" height="600px"></embed>  
-                {% endif %}
-                <form method="POST">
-                    {% csrf_token %}
-                    <button type ="submit" name = "delete">Delete</button>
-                </form>
+            {% if new_doc_url %}
+                <h3>Highlighted PDF:</h3>
+                <embed src="{{ new_doc_url }}" type="application/pdf" width="100%" height="600px"></embed>
+            {% elif document_url %}
+                <h3>Uploaded PDF:</h3>
+                <embed src="{{ document_url }}" type="application/pdf" width="100%" height="600px"></embed>  
+            {% endif %}
+            <form method="POST">
+                {% csrf_token %}
+                <button type="submit" name="delete">Delete</button>
+            </form>
+        </div>
+
+        <div class="notes">
+            <p>NOTES</p>
+            <form method="POST">
+                {% csrf_token %}
+                {{ note_form.as_p }}
+                <button type="submit" name="add-note">Add Note</button>
+            </form>
+
+            <div class="note-wrapper">
+                {% for note in notes %}
+                <div class="note">
+                    <p>{{ note.content|linebreaks }}</p>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <button type="submit" name="delete-note" value="{{ note.id }}">Delete</button>
+                    </form>
+                    <form method="POST" class="edit-note-box hidden">
+                        {% csrf_token %}
+                        <textarea name="new-text">{{ note.content }}</textarea>
+                        <button type="submit" name="edit-note" value="{{ note.id }}">Edit</button>
+                    </form>
+                    <button type="button" onclick="toggleEditNote(this)">Edit Note</button>
+                </div>
+                {% empty %}
+                <p>No notes yet.</p>
+                {% endfor %}
             </div>
-            <div class = "notes">
-                <p>NOTES</p>
-                <form method="POST">
-                    {% csrf_token %}
-                    {{ note_form.as_p }}
-                    <button type="submit" name = "add-note">Add Note</button>
-                </form>
-                <div class = "note-wrapper">
-                    {% for note in notes %}
-                    <div class = "note">
-                        <p> {{ note.content|linebreaks }} </p>
-                        <form method = "POST">
-                            {% csrf_token %}
-                            <button type = "submit" name = "delete-note" value = "{{ note.id }}">Delete</button>
-                        </form>
-                        <form method = "POST">
-                            {% csrf_token %}
-                            <textarea type="text" name="new-text" value = "{{ note.content }}"></textarea>
-                            <button type="submit" name="edit-note" value = "{{ note.id }}">Edit</button>
-                        </form>
-                    </div>
-                    {% empty %}
-                    <p>No notes yet.</p>
-                    {% endfor %}
+
+            <form method="POST">
+                {% csrf_token %}
+                {{ note_form.as_p }}
+                <button type="submit" name="highlight">Highlight</button>
+            </form>
+
+            <div class="highlight-wrapper">
+                {% for keyword, note in tup %}
+                <div class="highlight">
+                    <p>{{ keyword }} | {{ note }}</p>
+
+                    <button type="button" onclick="toggleAddBox(this)">Add Note</button>
+                    <form method="POST" class="box hidden">
+                        {% csrf_token %}
+                        {{ highlightnotes_form.notes }}
+                        <button type="submit" name="add-highlight-note" value="{{ keyword }}">Submit</button>
+                    </form>
+
+                    <button type="button" onclick="toggleEditBox(this)">Edit</button>
+                    <form method="POST" class="edit-box hidden">
+                        {% csrf_token %}
+                        <textarea name="new-highlight">{{ note }}</textarea>
+                        <button type="submit" name="edit-highlight-note" value="{{ keyword }}">Edit</button>
+                    </form>
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        <button type="submit" name="delete-highlight" value="{{ keyword }}">Delete</button>
+                    </form>
                 </div>
-                <form method="POST">
-                    {% csrf_token %}
-                    {{ note_form.as_p }}
-                    <button type = "submit" name="highlight">Highlight</button>
-                </form>
-                <div class = "highlight-wrapper">
-                    {% for keyword, note in tup %}
-                    <div class = "highlight">
-                        <p> {{ keyword }} | {{ note }}</p>
-                        <form method = "POST">
-                            {% csrf_token %}
-                            <button type = "submit" name = "add-highlight-note" onclick = "show_box()">Add Note</button>
-                            <button type = "submit" name = "delete-highlight" value = "{{ keyword }}">Delete</button>
-                        </form>
-                        <form method="POST" class = "box">
-                            {% csrf_token %}
-                            {{ highlightnotes_form.notes }}
-                            <button type= "submit" name = "add-highlight-note" value = "{{ keyword }}">Submit</button>
-                        </form>
-                        <form method = "POST">
-                            {% csrf_token %}
-                            <textarea name="new-highlight" value = "{{ note }}"></textarea>
-                            <button type="submit" name="edit-highlight-note" value = "{{ keyword }}">Edit</button>
-                        </form>
-                    </div>
-                    {% empty %}
-                    <p>No highlights yet.</p>
-                    {% endfor %}
-                </div>
+                {% empty %}
+                <p>No highlights yet.</p>
+                {% endfor %}
             </div>
         </div>
-    </body>
+    </div>
 
-    <script src = "{% static 'index.js' %}"></script>
+    <script>
 
+    function toggleAddBox(button) {
+        const form = button.nextElementSibling;
+        if (form) {
+            if (form.style.display == 'none') {
+                form.style.display = 'block';
+            }
+            else {
+                form.style.display = 'none';
+            }
+        }
+    }
+    
 
+    function toggleEditBox(button) {
+        const form = button.nextElementSibling;
+        if (form) {
+            if (form.style.display == 'none') {
+                form.style.display = 'block';
+            }
+            else {
+                form.style.display = 'none';
+            }
+        }
+    }
+
+    function toggleEditNote(button) {
+        const form = button.previousElementSibling;
+        if (form) {
+            if (form.style.display == 'none') {
+                    form.style.display = 'block';
+                }
+            else {
+                form.style.display = 'none';
+            }
+        }
+    }
+    </script>
+</body>
 </html>
