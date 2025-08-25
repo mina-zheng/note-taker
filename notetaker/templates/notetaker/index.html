@@ -42,6 +42,11 @@
                             {% csrf_token %}
                             <button type = "submit" name = "delete-note" value = "{{ note.id }}">Delete</button>
                         </form>
+                        <form method = "POST">
+                            {% csrf_token %}
+                            <textarea type="text" name="new-text" value = "{{ note.content }}"></textarea>
+                            <button type="submit" name="edit-note" value = "{{ note.id }}">Edit</button>
+                        </form>
                     </div>
                     {% empty %}
                     <p>No notes yet.</p>
@@ -53,22 +58,27 @@
                     <button type = "submit" name="highlight">Highlight</button>
                 </form>
                 <div class = "highlight-wrapper">
-                    {% for keyword in highlights %}
+                    {% for keyword, note in tup %}
                     <div class = "highlight">
-                        <p> {{ keyword }} </p>
+                        <p> {{ keyword }} | {{ note }}</p>
                         <form method = "POST">
                             {% csrf_token %}
-                            <button type = "submit" name = "add-highlight-note" value = "{{ keyword }}" onclick = "show_box()">Add Note</button>
+                            <button type = "submit" name = "add-highlight-note" onclick = "show_box()">Add Note</button>
                             <button type = "submit" name = "delete-highlight" value = "{{ keyword }}">Delete</button>
                         </form>
                         <form method="POST" class = "box">
                             {% csrf_token %}
-                            {{ note_form.as_p }}
-                            <button type= "submit" name = "submit-highlight-note">Add Note</button>
+                            {{ highlightnotes_form.notes }}
+                            <button type= "submit" name = "add-highlight-note" value = "{{ keyword }}">Submit</button>
+                        </form>
+                        <form method = "POST">
+                            {% csrf_token %}
+                            <textarea name="new-highlight" value = "{{ note }}"></textarea>
+                            <button type="submit" name="edit-highlight-note" value = "{{ keyword }}">Edit</button>
                         </form>
                     </div>
                     {% empty %}
-                    <p>No notes yet.</p>
+                    <p>No highlights yet.</p>
                     {% endfor %}
                 </div>
             </div>

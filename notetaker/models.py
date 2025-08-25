@@ -7,6 +7,7 @@ class Document(models.Model):
 
 
 class Notes(models.Model):
+    document = models.ForeignKey(Document, on_delete=models.CASCADE)
     content = models.CharField()
 
 class Highlights(models.Model):
@@ -15,5 +16,9 @@ class Highlights(models.Model):
                           default=list,
                           blank=True
     )
-    notes = models.CharField(default="")
 
+class HighlightNotes(models.Model):
+    document = models.ForeignKey(Document, on_delete=models.CASCADE)
+    keyword = models.CharField()
+    notes = models.CharField(blank = True)
+    

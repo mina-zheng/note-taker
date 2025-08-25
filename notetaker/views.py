@@ -1,7 +1,7 @@
 from django.http import HttpResponse # type: ignore
-from .forms import DocumentForm, NotesForm
+from .forms import DocumentForm, NotesForm, HighlightsForm, HighlightNotesForm
 from django.shortcuts import render # type:ignore
-from .models import Document, Notes, Highlights
+from .models import Document, Notes, Highlights, HighlightNotes
 import fitz
 import os
 from django.conf import settings # type:ignore
@@ -12,6 +12,8 @@ def index(request):
     
     doc_form = DocumentForm()
     note_form = NotesForm()
+    highlights_form = HighlightsForm()
+    highlightnotes_form = HighlightNotesForm()
 
     notes = Notes.objects.all()
     try:
@@ -42,8 +44,21 @@ def index(request):
         elif "add-note" in request.POST:
             note_form = NotesForm(request.POST)
             if note_form.is_valid():
-                note_form.save()
+                note = note_form.save(commit=False) 
+                note.document = db_document          
+                note.save()                          
                 note_form = NotesForm()
+        
+        elif "edit-note" in request.POST:
+            note_id = request.POST.get("edit-note")
+            new = request.POST.get("new-text")
+
+            try:
+                note = Notes.objects.get(id = note_id, document=db_document)
+                note.content = new
+                note.save()
+            except:
+                pass 
         
         elif "delete-note" in request.POST:
             note_id = request.POST.get("delete-note")
@@ -59,16 +74,43 @@ def index(request):
                 instance.keywords.append(keyword)
                 instance.save()
 
+                notes_instance, created = HighlightNotes.objects.get_or_create(document=db_document)
+                notes_instance.keyword = keyword
+                notes_instance.save()
+
         
         elif "delete-highlight" in request.POST:
             deleted_keyword = request.POST.get("delete-highlight")
-            highlights.remove(deleted_keyword)
+            keywords = highlighted_instance.keywords or []
+
+            keywords.remove(deleted_keyword)
+            highlighted_instance.keywords = keywords
 
             highlighted_instance.save()
 
+            HighlightNotes.objects.filter(document=db_document,keyword=deleted_keyword).delete()
 
-        #elif "add-highlight-note" in request.POST:
             
+
+
+        elif "add-highlight-note" in request.POST:
+            keyword = request.POST.get("add-highlight-note")
+            keyword_instance, created = HighlightNotes.objects.get_or_create(document = db_document, keyword=keyword)
+
+            form = HighlightNotesForm(request.POST, instance=keyword_instance)
+            if form.is_valid():
+                keyword_instance.save()
+                form = HighlightNotesForm()
+
+        elif "edit-highlight-note" in request.POST:
+            keyword = request.POST.get("edit-highlight-note")
+            new = request.POST.get("new-highlight")
+            try:
+                highlight = HighlightNotes.objects.get(keyword=keyword, document=db_document)
+                highlight.notes = new
+                highlight.save()
+            except:
+                pass 
             
         try:
             highlighted_instance = Highlights.objects.get(document=db_document)
@@ -76,20 +118,24 @@ def index(request):
         except:
             highlights = []
         
-
-        
-
-
     if db_document:
         document_path = db_document.document.path
         doc = fitz.open(document_path)
+        tup = []
 
         try:
             highlight_instance = Highlights.objects.get(document=db_document)
             highlights = highlight_instance.keywords
-        
+
+            for keyword in highlights:
+                try:
+                    note_instance = HighlightNotes.objects.get(document=db_document, keyword=keyword)
+                    tup.append((keyword, note_instance.notes))
+                except:
+                    tup.append((keyword, ""))
         except:
             highlights = []
+            dict = {}
 
         for page in doc:
             for kw in highlights:
@@ -108,4 +154,7 @@ def index(request):
                                                     'note_form':note_form,
                                                     'notes':notes,
                                                     'highlights':highlights,
-                                                    'new_doc_url':new_doc_url})
+                                                    'new_doc_url':new_doc_url,
+                                                    'highlights_form':highlights_form,
+                                                    'highlightnotes_form':highlightnotes_form,
+                                                    "tup":tup})
